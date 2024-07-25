@@ -313,7 +313,7 @@ def parse_result_csv(result_csv_file: str) -> []:
             )
             server_info_dict = server_info_to_dict(server_info)
             data.append(server_info_dict)
-    #TODO 以HK JP TW KR SG 排序
+    # TODO 以HK JP TW KR SG 排序
     return data if len(data) < 6 else data[:6]
 
 
@@ -489,6 +489,29 @@ def get_current_weekday():
     # 如果是周日（原本返回6），我们保持不变
     # 其他天数保持不变（周一是0，周二是1，以此类推）
     return weekday
+
+
+def get_current_weekday_plus():
+    now = datetime.datetime.now()
+    current_time = now.time()
+    current_day = now.weekday()  # Monday is 0, Sunday is 6
+
+    # Define time ranges
+    morning_start = datetime.datetime.strptime("01:00", "%H:%M").time()
+    morning_end = datetime.datetime.strptime("11:00", "%H:%M").time()
+    afternoon_start = datetime.datetime.strptime("12:00", "%H:%M").time()
+    afternoon_end = datetime.datetime.strptime("23:00", "%H:%M").time()
+
+    # Check each day and time range
+    for day in range(7):  # 0 to 6, representing Monday to Sunday
+        if current_day == day:
+            if morning_start <= current_time < morning_end:
+                return day * 2
+            elif afternoon_start <= current_time < afternoon_end:
+                return day * 2 + 1
+
+    # If not in any specified range, return -1 or handle as needed
+    return 0
 
 
 # 搭配worker 展示结果

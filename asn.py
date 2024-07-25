@@ -18,7 +18,20 @@ ASN_Map = {
     "4785": "AS4785 xTom,13568",
     "2914": "AS2914 NTT America Inc,7000832",
     "3258": "AS3258 xTom Japan,22016",
-    "4713": "AS4713 NTT Communications Corporation Japan,28692736"
+    "4713": "AS4713 NTT Communications Corporation Japan,28692736",
+    "16625": "AS16625 Akamai Technologies,5514240",
+    "21859": "AS21859 Zenlayer Inc,649728"
 }
-# 每天运行一个
-Wanted_ASN = ['906', '4760', '31898', '135377', '3462', '4609', '4760']
+# 每天运行2个，凌晨一个 中午一个
+Wanted_ASN = ['906', '4760', '31898', '135377', '3462', '4609', '4760',
+              '9312', '4785', '3258', '21859', '4809', '45102', '132203']
+
+CountryASN = {
+    'HK': [],
+    'MO': [],
+    'SG': [],
+    'TW': [],
+    'KR': [],
+    'JP': [],
+    'US': ['906']
+}
