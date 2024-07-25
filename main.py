@@ -81,7 +81,8 @@ def get_cidr_ips(asn):
         # 如果文件不存在，请求 API 数据
         url = f'https://api.bgpview.io/asn/{asn}/prefixes'
         headers = {
-            "User-Agent": "curl/7.68.0"
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
+            "Cookie": "cf_clearance=QGTGcYnHuiA.9rho9oE4t8qMiyEOZbTbSISclJRmL2A-1720255983-1.0.1.1-Mf0yAeogUfsanJBjw3qpZKalVLAfsN8AyPnjlQDzT0PvEFBOO7Ypp9NyQ4WCWHIAaeCAYaqpVE_Aa6z3s8AIpA; _ga=GA1.2.16443840.1721715301; _gid=GA1.2.1729940749.1721936545; _ga_7YFHLCZHVM=GS1.2.1721936545.5.1.1721937177.55.0.0"
         }
         response = requests.get(url, headers=headers)
         response.raise_for_status()
