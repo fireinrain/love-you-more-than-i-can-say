@@ -33,12 +33,12 @@ Wanted_ASN = ['906', '4760', '31898', '135377', '3462', '4609', '4760',
               '9312', '4785', '3258', '21859', '4809', '45102', '132203']
 
 CountryASN = {
-    'HK': [],
-    'MO': [],
-    'SG': [],
-    'TW': [],
-    'KR': [],
-    'JP': [],
+    'HK': ['4515', '9269', '4760', '9304', '10103', '17444', '9381', '135377'],
+    'MO': ['4609', '7582', '64061', '133613'],
+    'SG': ['45102', '139070', '139190'],
+    'TW': ['4609'],
+    'KR': ['31898'],
+    'JP': ['2497'],
     'US': ['906']
 }
 
@@ -61,7 +61,7 @@ def get_cidr_ips(asn):
         url = f'https://api.bgpview.io/asn/{asn}/prefixes'
         headers = {
             "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
-            "Cookie":"cf_clearance=QGTGcYnHuiA.9rho9oE4t8qMiyEOZbTbSISclJRmL2A-1720255983-1.0.1.1-Mf0yAeogUfsanJBjw3qpZKalVLAfsN8AyPnjlQDzT0PvEFBOO7Ypp9NyQ4WCWHIAaeCAYaqpVE_Aa6z3s8AIpA; _ga=GA1.2.16443840.1721715301; _gid=GA1.2.1729940749.1721936545; _ga_7YFHLCZHVM=GS1.2.1721936545.5.1.1721937177.55.0.0"
+            "Cookie": "cf_clearance=QGTGcYnHuiA.9rho9oE4t8qMiyEOZbTbSISclJRmL2A-1720255983-1.0.1.1-Mf0yAeogUfsanJBjw3qpZKalVLAfsN8AyPnjlQDzT0PvEFBOO7Ypp9NyQ4WCWHIAaeCAYaqpVE_Aa6z3s8AIpA; _ga=GA1.2.16443840.1721715301; _gid=GA1.2.1729940749.1721936545; _ga_7YFHLCZHVM=GS1.2.1721936545.5.1.1721937177.55.0.0"
         }
         response = requests.get(url, headers=headers)
         response.raise_for_status()
