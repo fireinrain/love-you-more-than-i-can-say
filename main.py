@@ -27,8 +27,8 @@ pool = redis.ConnectionPool(
     host=redis_host,
     port=redis_port,
     db=1, password=redis_pass,
-    socket_connect_timeout=60 * 6,
-    socket_timeout=60 * 6,
+    socket_connect_timeout=60 * 30,
+    socket_timeout=60 * 30,
     max_connections=2
 )
 # 适配的redis版本
