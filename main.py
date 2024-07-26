@@ -10,6 +10,8 @@ import time
 import uuid
 from collections import namedtuple
 
+import pytz
+
 import notify
 from asn import Wanted_ASN, ASN_Map
 import redis
@@ -492,16 +494,21 @@ def get_current_weekday():
     return weekday
 
 
+# 修改为默认美国东部时间
 def get_current_weekday_plus():
-    now = datetime.datetime.now()
+    # Define the US Eastern time zone
+    eastern = pytz.timezone('US/Eastern')
+
+    # Get the current time in the US Eastern time zone
+    now = datetime.datetime.now(eastern)
     current_time = now.time()
     current_day = now.weekday()  # Monday is 0, Sunday is 6
 
     # Define time ranges
-    morning_start = datetime.datetime.strptime("01:00", "%H:%M").time()
-    morning_end = datetime.datetime.strptime("11:00", "%H:%M").time()
+    morning_start = datetime.datetime.strptime("00:01", "%H:%M").time()
+    morning_end = datetime.datetime.strptime("11:59", "%H:%M").time()
     afternoon_start = datetime.datetime.strptime("12:00", "%H:%M").time()
-    afternoon_end = datetime.datetime.strptime("23:00", "%H:%M").time()
+    afternoon_end = datetime.datetime.strptime("23:59", "%H:%M").time()
 
     # Check each day and time range
     for day in range(7):  # 0 to 6, representing Monday to Sunday
