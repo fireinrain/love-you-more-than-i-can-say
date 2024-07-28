@@ -27,7 +27,8 @@ ASN_Map = {
     "4713": "AS4713 NTT Communications Corporation Japan,28692736",
     "16625": "AS16625 Akamai Technologies,5514240",
     "21859": "AS21859 Zenlayer Inc,649728",
-    "17511": "AS17511 OPTAGE Inc,3059200"
+    "17511": "AS17511 OPTAGE Inc,3059200",
+    "25820": "AS25820 IT7 Networks Inc,392448"
 }
 # 每天运行2个，凌晨一个 中午一个
 Wanted_ASN = ['906', '4760', '31898', '135377', '3462', '4609', '4760',
