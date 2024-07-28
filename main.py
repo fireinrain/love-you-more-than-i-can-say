@@ -524,7 +524,7 @@ def get_current_weekday_plus():
 
 # 搭配worker 展示结果
 def main():
-    weekday = get_current_weekday()
+    weekday = get_current_weekday_plus()
     asn = Wanted_ASN[weekday]
     argv_ = sys.argv
     if len(argv_) <= 1:

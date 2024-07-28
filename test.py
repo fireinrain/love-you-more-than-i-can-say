@@ -54,6 +54,66 @@ def get_current_weekday_plus():
     # If not in any specified range, return -1 or handle as needed
     return 0
 
+
+import unittest
+from unittest.mock import patch
+import pytz
+
+
+
+
+
+class TestGetCurrentWeekdayPlus(unittest.TestCase):
+    @patch('datetime.datetime')
+    def test_monday_morning(self, mock_datetime):
+        eastern = pytz.timezone('US/Eastern')
+        mock_datetime.now.return_value = datetime(2023, 7, 24, 8, 0).replace(tzinfo=pytz.UTC).astimezone(
+            eastern)
+        self.assertEqual(get_current_weekday_plus(), 0)
+
+    @patch('datetime.datetime')
+    def test_monday_afternoon(self, mock_datetime):
+        eastern = pytz.timezone('US/Eastern')
+        mock_datetime.now.return_value = datetime(2023, 7, 24, 13, 0).replace(tzinfo=pytz.UTC).astimezone(
+            eastern)
+        self.assertEqual(get_current_weekday_plus(), 1)
+
+    @patch('datetime.datetime')
+    def test_sunday_morning(self, mock_datetime):
+        eastern = pytz.timezone('US/Eastern')
+        mock_datetime.now.return_value = datetime(2023, 7, 30, 9, 0).replace(tzinfo=pytz.UTC).astimezone(
+            eastern)
+        self.assertEqual(get_current_weekday_plus(), 12)
+
+    @patch('datetime.datetime')
+    def test_sunday_afternoon(self, mock_datetime):
+        eastern = pytz.timezone('US/Eastern')
+        mock_datetime.now.return_value = datetime(2023, 7, 30, 15, 0).replace(tzinfo=pytz.UTC).astimezone(
+            eastern)
+        self.assertEqual(get_current_weekday_plus(), 13)
+
+    @patch('datetime.datetime')
+    def test_edge_case_morning(self, mock_datetime):
+        eastern = pytz.timezone('US/Eastern')
+        mock_datetime.now.return_value = datetime(2023, 7, 25, 11, 59).replace(tzinfo=pytz.UTC).astimezone(
+            eastern)
+        self.assertEqual(get_current_weekday_plus(), 2)
+
+    @patch('datetime.datetime')
+    def test_edge_case_afternoon(self, mock_datetime):
+        eastern = pytz.timezone('US/Eastern')
+        mock_datetime.now.return_value = datetime(2023, 7, 25, 12, 0).replace(tzinfo=pytz.UTC).astimezone(
+            eastern)
+        self.assertEqual(get_current_weekday_plus(), 3)
+
+    @patch('datetime.datetime')
+    def test_midnight(self, mock_datetime):
+        eastern = pytz.timezone('US/Eastern')
+        mock_datetime.now.return_value = datetime(2023, 7, 26, 0, 0).replace(tzinfo=pytz.UTC).astimezone(
+            eastern)
+        self.assertEqual(get_current_weekday_plus(), 0)  # Assuming it falls outside the defined ranges
+
+
 if __name__ == '__main__':
     # refresh_markdown("ports_results")
     # test_env_injection()
@@ -61,3 +121,4 @@ if __name__ == '__main__':
     # test_ip_file()
 
     print(get_current_weekday_plus())
+    unittest.main()
