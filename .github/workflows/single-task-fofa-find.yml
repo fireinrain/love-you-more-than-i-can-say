@@ -4,8 +4,8 @@ name: single-task-fofa-find
 on:
   push:
     branches:
-      - master
-#    tags: [ "v[0-9]+.[0-9]+.[0-9]+*" ]
+#      - master
+    tags: [ "v[0-9]+.[0-9]+.[0-9]+*" ]
   schedule:
 #     run on every hour
 #     - cron: "0 * * * *"
