@@ -3,13 +3,13 @@ import datetime
 import json
 import random
 import re
-import socket
-import time
-from urllib.parse import urlparse
-
 import urllib3
-from requests import Request, Response
+import aiohttp
+import asyncio
+import time
+import socket
 
+from aiohttp import ClientTimeout, TCPConnector
 from redis_tool import r
 import requests
 import locations
@@ -220,117 +220,132 @@ class IPChecker:
         return random.choice(user_agents)
 
     @staticmethod
-    def new_check_cf_proxy(ip: str, port: int | str) -> str | bool:
-        """
-        向给定IP和端口发送GET请求，返回特定响应或超时指示。
-
-        参数:
-        ip: 表示IP地址的字符串。
-        port: 表示端口号的整数。
-
-        返回:
-        表示结果的字符串（'https_error' 或 'timeout'）。
-        """
-
-        def fetch_result(url: str) -> Request | Exception:
-            try:
-                response = requests.get(url, timeout=3.5, allow_redirects=False, verify=False)
-                return response
-            except Exception as e:
-                return e
-
-        url = f"http://{ip}:{port}/cdn-cgi/trace"
-        url2 = f"https://{ip}:{port}/cdn-cgi/trace"
-        pool = pool_executor
-        future1 = pool.submit(fetch_result, url)
-        future2 = pool.submit(fetch_result, url2)
-
-        # 等待两个请求完成并获取结果
-        response1 = future1.result()
-        response2 = future2.result()
-
-        if isinstance(response1, Response) and isinstance(response2, Response):
-            if ((
-                        "400 The plain HTTP request was sent to HTTPS port" in response1.text and "cloudflare" in response1.text) or "visit_scheme=http" in response1.text) and (
-                    response2.status_code == 403 and '403 Forbidden' in response2.text):
-                return True
-        return False
-
-    @staticmethod
     def detect_cloudflare_location(ip_addr: str, port: int | str, body: str, tcpDuration: str) -> dict | None:
+        # {"ip": "60.246.230.77", "port": 443, "enable_tls": true, "data_center": "HKG", "region": "Asia Pacific",
+        # "city": "Hong Kong", "network_latency": "152 ms", "download_speed": "0 kB/s"}
         if 'uag=Mozilla/5.0' in body:
             matches = re.findall('colo=([A-Z]+)', body)
             if matches:
                 dataCenter = matches[0]  # Get the first match
                 loc = locations.CloudflareLocationMap.get(dataCenter)
                 if loc:
-                    print(f"发现有效IP {ip_addr} 端口 {port} 位置信息 {loc['city']} 延迟 {tcpDuration} 毫秒")
+                    print(f"发现有效IP {ip_addr} 端口 {port} 位置信息 {loc['city']} 延迟 {tcpDuration} 毫秒,速度未知")
                     # Append a dictionary to resultChan to simulate adding to a channel
                     return {
-                        "ipAddr": ip_addr,
+                        "ip": ip_addr,
                         "port": port,
-                        "dataCenter": dataCenter,
+                        "enable_tls": True,
+                        "data_center": dataCenter,
                         "region": loc['region'],
                         "city": loc['city'],
                         "latency": f"{tcpDuration} ms",
-                        "tcpDuration": tcpDuration
+
                     }
-                print(f"发现有效IP {ip_addr} 端口 {port} 位置信息未知 延迟 {tcpDuration} 毫秒")
+                print(f"发现有效IP {ip_addr} 端口 {port} 位置信息未知 延迟 {tcpDuration} 毫秒,速度未知")
                 # Append a dictionary with some empty fields to resultChan
                 return {
-                    "ipAddr": ip_addr,
+                    "ip": ip_addr,
                     "port": port,
-                    "dataCenter": dataCenter,
+                    "enable_tls": True,
+                    "data_center": dataCenter,
                     "region": "",
                     "city": "",
                     "latency": f"{tcpDuration} ms",
-                    "tcpDuration": tcpDuration
                 }
 
         return None
 
-    @staticmethod
-    def check_cloudflare_proxy(host: str, port: str | int, tls: bool = True) -> [bool, {}]:
-        ip = host
-        port = int(port)
-        # Set the headers for the download request
-        headers = {'Host': 'speed.cloudflare.com',
-                   'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.104 Safari/537.36'
-                   }
-        test_url = 'speed.cloudflare.com/cdn-cgi/trace'
-        if tls:
-            params = {'resolve': f"speed.cloudflare.com:{port}:{ip}", 'alpn': 'h2,http/1.1', 'utls': 'random'}
 
-            url = f'https://{test_url}'
-        else:
-            params = {'resolve': f"speed.cloudflare.com:{port}:{ip}"}
+class CustomResolver(aiohttp.abc.AbstractResolver):
+    def __init__(self, ip, port):
+        self.ip = ip
+        self.port = port
 
-            url = f'http://{test_url}'
-        parsed_url = urlparse(url)
-        path = parsed_url.path
-        if not path:
-            path = '/'
-        if parsed_url.scheme != 'https' and parsed_url.scheme != 'http':
-            return [False, {}]
+    async def resolve(self, host, port=0, family=socket.AF_INET):
+        return [{
+            'hostname': host,
+            'host': self.ip,
+            'port': self.port,
+            'family': family,
+            'proto': 0,
+            'flags': 0,
+        }]
 
-        response = None
+    async def close(self):
+        pass
+
+
+async def cf_speed_download(ip: str, port: int) -> (float, {}):
+    url_string = f"https://speed.cloudflare.com/__down?bytes={1024 * 1024 * 1024}"
+    trace_url = f"https://speed.cloudflare.com/cdn-cgi/trace"
+    timeout = ClientTimeout(total=60)
+
+    resolver = CustomResolver(ip, port)
+    connector = TCPConnector(resolver=resolver)
+
+    async with aiohttp.ClientSession(connector=connector, timeout=timeout) as session:
         try:
+            async with session.get(url_string) as response:
+                data_len = 0
+                start_time = time.monotonic()
+                while True:
+                    chunk = await response.content.read(1024)
+                    if not chunk:
+                        break
+                    elapsed_time = time.monotonic() - start_time
+                    if elapsed_time <= 5:
+                        data_len += len(chunk)
+                    else:
+                        data_len += len(chunk)
+                        break
+                # print("data_len: ", data_len)
+                # print("elapsed_time: ", elapsed_time)
+                if elapsed_time - 5.0 < 0:
+                    download_speed = 0.0
+                else:
+                    download_speed = data_len / elapsed_time
+
+            headers = {
+                'Host': 'speed.cloudflare.com',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.104 Safari/537.36'
+            }
             start_time = time.time()
-            response = requests.get(url, headers=headers, params=params, timeout=5)
-            # Calculate the total time taken for both operations
-            total_duration = f'{(time.time() - start_time) * 1000:.2f}'
-            print(f'Total tcp connection duration: {total_duration} ms')
-            resp = response.text
-            location = IPChecker.detect_cloudflare_location(host, port, resp, str(total_duration))
-            if location is None:
-                return [False, {}]
-            return [True, location]
+            async with session.get(trace_url, headers=headers) as response:
+                resp_text = await response.text()
+                total_duration = f'{(time.time() - start_time) * 1000:.2f}'
+
+                location = IPChecker.detect_cloudflare_location(ip, port, resp_text, str(total_duration))
+                location['download_speed'] = f"{(download_speed / 1024.0):.2f} kB/s"
+
+            return download_speed, location
         except Exception as e:
-            print(f">>> Connection failed of: {e}")
-            return [False, {}]
-        finally:
-            if response:
-                response.close()
+            print(f"An error occurred: {e}")
+            return 0.0, ""
+
+
+async def check_if_cf_proxy(ip: str, port: int) -> (bool, {}):
+    url = f"http://{ip}:{port}/cdn-cgi/trace"
+
+    host = url.replace("http://", "").replace("/cdn-cgi/trace", "")
+    headers = {
+        "User-Agent": "curl/7.64.1",
+        "Host": host,
+    }
+    timeout = aiohttp.ClientTimeout(total=3.5)
+
+    async with aiohttp.ClientSession(timeout=timeout) as session:
+        try:
+            async with session.get(url, headers=headers, allow_redirects=False, ssl=False) as response:
+                text = await response.text()
+                # print(response_text_)
+            if (
+                    "400 The plain HTTP request was sent to HTTPS port" in text and "cloudflare" in text) or "visit_scheme=http" in text:
+                speed, location = await cf_speed_download(ip, port)
+                if speed - 0.1 > 0:
+                    return True, location
+        except Exception as e:
+            print(f"Request Error: {e}")
+    return False, {}
 
 
 def clean_dead_ip():
@@ -373,27 +388,33 @@ def clean_dead_ip():
                 r.hdel('snifferx-result', key)
 
 
+async def main():
+    # ips = ['https://8.222.134.170:2096', 'https://47.236.117.48:2096', 'http://154.219.5.235:2095',
+    #        'http://154.219.5.248:2095', 'http://154.219.5.199:2095', 'http://154.219.5.190:2095',
+    #        'http://154.219.5.222:2095', 'http://47.236.144.48:2095', 'https://8.219.158.157', 'https://www.bb999.app',
+    #        'http://www.bb999.app', 'https://bb999.app', 'https://8.219.210.171:2087', 'http://8.219.87.30:2095',
+    #        'http://8.219.124.227:2095', 'http://154.219.5.135:2095', 'http://154.219.5.63:2095',
+    #        'http://154.219.5.184:2095', 'http://154.219.5.252:2095', 'http://154.219.5.108:2095']
+    #
+    # for i in ips:
+    #     ip_str = i.split("//")[1]
+    #     ip = None
+    #     port = None
+    #     if ":" in ip_str:
+    #         ip = ip_str.split(":")[0]
+    #         port = ip_str.split(":")[1]
+    #     else:
+    #         ip = ip_str
+    #         port = '443'
+    #     cloudflare_proxy = await check_if_cf_proxy(ip, port)
+    #     print(f"ip: {ip},port:{port}, cf-proxy:{cloudflare_proxy}")
+    #     time.sleep(1)
+
+    c2 = await check_if_cf_proxy('211.75.243.91', 16764)
+    print(f"cloudflare_proxy: {c2}")
+
+
 if __name__ == '__main__':
     # clean_dead_ip()
-    a = ['https://154.17.22.207', 'https://154.17.16.81', 'https://154.17.4.23', 'https://154.17.21.50',
-         'https://154.17.27.156', 'https://174.136.206.102', 'https://154.17.8.194:8081', 'https://154.17.30.90',
-         'https://154.17.10.76:8880', 'https://154.17.1.118', 'https://154.17.17.194', 'https://154.17.22.16',
-         'https://154.17.8.194:22660', 'https://154.17.8.194:26688', 'https://154.17.8.190:13995',
-         'https://154.17.8.81:52366', 'https://154.17.8.98:12071', 'https://154.17.26.56', 'https://154.17.0.80:564',
-         'https://65.75.194.182']
-    for i in a:
-        ip_str = i.split("//")[1]
-        ip = None
-        port = None
-        if ":" in ip_str:
-            ip = ip_str.split(":")[0]
-            port = ip_str.split(":")[1]
-        else:
-            ip = ip_str
-            port = '443'
-        cloudflare_proxy = IPChecker.new_check_cf_proxy(ip, port)
-        print(f"ip: {ip},port:{port}, cf-proxy:{cloudflare_proxy}")
-        time.sleep(1)
 
-    # cloudflare_proxy = IPChecker.new_check_cf_proxy('47.56.196.176', '9443')
-    # print(f"cloudflare_proxy: {cloudflare_proxy}")
+    asyncio.run(main())
