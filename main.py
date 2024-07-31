@@ -238,6 +238,8 @@ def store_ip_port_result_in_redis(asn, iptests: []):
         ip = server['ip']
         port = server['port']
         server_info_json = json.dumps(server)
+        if server_info_json['download_speed'] == '0 kB/s':
+            continue
         r.hsetnx('snifferx-result', f'{asn}:{ip}:{port}', server_info_json)
 
 
