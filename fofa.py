@@ -40,7 +40,7 @@ def query_proxy_ip(query_rule: str, count: int) -> [()]:
     return result_list
 
 
-def store_proxy_ip2redis(iptests):
+def store_proxy_ip2redis(iptests, region: str):
     for server in iptests:
         ip = server['ip']
         port = server['port']
@@ -48,7 +48,7 @@ def store_proxy_ip2redis(iptests):
             continue
         server_info_json = json.dumps(server)
 
-        r.hsetnx('snifferx-result', f'fofa:{ip}:{port}', server_info_json)
+        r.hsetnx('snifferx-result', f'fofa-{region.lower()}:{ip}:{port}', server_info_json)
 
 
 async def main():
@@ -67,7 +67,7 @@ async def main():
     fofa_static = {}
     for region, rule in FoFaQueryRules.items():
         print(f"find rule: {rule}")
-        proxy_ips = query_proxy_ip(rule, 40)
+        proxy_ips = query_proxy_ip(rule, 50)
         proxy_ip_list = []
         for proxy_ip in proxy_ips:
             check_info = await checker.check_if_cf_proxy(proxy_ip[0], proxy_ip[1])
@@ -75,7 +75,7 @@ async def main():
                 print(f"ip: {proxy_ip[0]},port:{proxy_ip[1]}, cf-proxy:{check_info}")
                 proxy_ip_list.append(check_info[1])
         fofa_static[region] = len(proxy_ip_list)
-        store_proxy_ip2redis(proxy_ip_list)
+        store_proxy_ip2redis(proxy_ip_list, region)
         print("--------------------------------")
         await asyncio.sleep(30)
 
