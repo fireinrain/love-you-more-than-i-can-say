@@ -8,7 +8,7 @@ import aiohttp
 import asyncio
 import time
 import socket
-
+import notify
 from aiohttp import ClientTimeout, TCPConnector
 from redis_tool import r
 import requests
@@ -349,9 +349,23 @@ async def check_if_cf_proxy(ip: str, port: int) -> (bool, {}):
 
 
 def clean_dead_ip():
+    # 发送TG消息开始
+    msg_info = f"CleanGFW-Ban ip"
+    telegram_notify = notify.pretty_telegram_notify("🍻🍻CleanGFW-Ban-IP运行开始",
+                                                    f"clean-ban-ip gfw",
+                                                    msg_info)
+    telegram_notify = notify.clean_str_for_tg(telegram_notify)
+    success = notify.send_telegram_message(telegram_notify)
+
+    if success:
+        print("Start clean ip message sent successfully!")
+    else:
+        print("Start clean ip message failed to send.")
+
     keys = r.hkeys('snifferx-result')
     dont_need_dc = ['North America', 'Europe']
     # For each key, get the value and store in Cloudflare KV
+    remove_counts = 0
     for key in keys:
         value = r.hget('snifferx-result', key)
 
@@ -368,11 +382,13 @@ def clean_dead_ip():
         if region in dont_need_dc and '906' not in str(key):
             # delete ip
             r.hdel('snifferx-result', key)
+            remove_counts += 1
             print(f"已删除: {key} {kv_value}")
         port_open = IPChecker.check_port_open_with_retry(ip, port, 10)
         if not port_open:
             print(f">>> 当前优选IP端口已失效: {ip}:{port},进行移除...")
             r.hdel('snifferx-result', key)
+            remove_counts += 1
 
         # 判断当前是否为周日 如果是 则进行gfw ban检测
         today = datetime.datetime.today()
@@ -386,6 +402,19 @@ def clean_dead_ip():
             if baned_with_gfw:
                 print(f">>> 当前优选IP端口已被墙: {ip}:{port},进行移除...")
                 r.hdel('snifferx-result', key)
+                remove_counts += 1
+
+    end_msg_info = f"IP移除统计信息: {remove_counts}"
+    telegram_notify = notify.pretty_telegram_notify("🎉🎉CleanGFW-Ban-IP运行结束",
+                                                    f"clean-ban-ip gfw",
+                                                    end_msg_info)
+    telegram_notify = notify.clean_str_for_tg(telegram_notify)
+    success = notify.send_telegram_message(telegram_notify)
+
+    if success:
+        print("Start fofa find message sent successfully!")
+    else:
+        print("Start fofa find message failed to send.")
 
 
 async def main():
