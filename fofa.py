@@ -8,13 +8,14 @@ import notify
 import checker
 
 FoFaQueryRules = {
-    'KR': 'server=="cloudflare" && header="Forbidden" && asn!="13335" && asn!="209242" && country=="KR" && "http"',
-    'JP': 'server=="cloudflare" && header="Forbidden" && asn!="13335" && asn!="209242" && country=="JP" && "http"',
-    'TW': 'server=="cloudflare" && header="Forbidden" && asn!="13335" && asn!="209242" && region=="TW" && "http"',
-    'HK': 'server=="cloudflare" && header="Forbidden" && asn!="13335" && asn!="209242" && region=="HK" && "https"',
-    'MO': 'server=="cloudflare" && header="Forbidden" && asn!="13335" && asn!="209242" && region=="MO" && "http"',
-    'SG': 'server=="cloudflare" && header="Forbidden" && asn!="13335" && asn!="209242" && country=="SG" && "http"',
-    'US': 'server=="cloudflare" && header="Forbidden" && asn="906" && country=="US" && "https"'
+    # 'KR': 'server=="cloudflare" && header="Forbidden" && asn!="13335" && asn!="209242" && country=="KR" && "http"',
+    # 'JP': 'server=="cloudflare" && header="Forbidden" && asn!="13335" && asn!="209242" && country=="JP" && "http"',
+    # 'TW': 'server=="cloudflare" && header="Forbidden" && asn!="13335" && asn!="209242" && region=="TW" && "http"',
+    # 'HK': 'server=="cloudflare" && header="Forbidden" && asn!="13335" && asn!="209242" && region=="HK" && "https"',
+    # 'MO': 'server=="cloudflare" && header="Forbidden" && asn!="13335" && asn!="209242" && region=="MO" && "http"',
+    # 'SG': 'server=="cloudflare" && header="Forbidden" && asn!="13335" && asn!="209242" && country=="SG" && "http"',
+    'CN': 'server=="cloudflare" && header="Forbidden" && asn!="13335" && asn!="209242" && country=="CN" && "https"',
+    # 'US': 'server=="cloudflare" && header="Forbidden" && asn="906" && country=="US" && "https"'
 }
 
 
