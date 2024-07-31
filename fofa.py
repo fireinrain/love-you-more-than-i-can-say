@@ -41,10 +41,15 @@ def query_proxy_ip(query_rule: str, count: int) -> [()]:
 
 
 def store_proxy_ip2redis(iptests, region: str):
+    # 除了US 906 之外的us ip 都不需要
+    dont_need_dc = ['North America', 'Europe']
+
     for server in iptests:
         ip = server['ip']
         port = server['port']
-        if server['download_speed'] == '0 kB/s':
+        loc = server['region']
+
+        if server['download_speed'] == '0 kB/s' or (loc in dont_need_dc and region != 'US'):
             continue
         server_info_json = json.dumps(server)
 
