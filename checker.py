@@ -1,3 +1,4 @@
+import concurrent.futures as futures
 import datetime
 import json
 import random
@@ -5,8 +6,17 @@ import re
 import socket
 import time
 from urllib.parse import urlparse
+
+import urllib3
+from requests import Request, Response
+
 from redis_tool import r
 import requests
+import locations
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+pool_executor = futures.ThreadPoolExecutor()
 
 
 def random_sleep(max_sleep: int = 1):
@@ -210,6 +220,76 @@ class IPChecker:
         return random.choice(user_agents)
 
     @staticmethod
+    def new_check_cf_proxy(ip: str, port: int | str) -> str | bool:
+        """
+        向给定IP和端口发送GET请求，返回特定响应或超时指示。
+
+        参数:
+        ip: 表示IP地址的字符串。
+        port: 表示端口号的整数。
+
+        返回:
+        表示结果的字符串（'https_error' 或 'timeout'）。
+        """
+
+        def fetch_result(url: str) -> Request | Exception:
+            try:
+                response = requests.get(url, timeout=3.5, allow_redirects=False, verify=False)
+                return response
+            except Exception as e:
+                return e
+
+        url = f"http://{ip}:{port}/cdn-cgi/trace"
+        url2 = f"https://{ip}:{port}/cdn-cgi/trace"
+        pool = pool_executor
+        future1 = pool.submit(fetch_result, url)
+        future2 = pool.submit(fetch_result, url2)
+
+        # 等待两个请求完成并获取结果
+        response1 = future1.result()
+        response2 = future2.result()
+
+        if isinstance(response1, Response) and isinstance(response2, Response):
+            if ((
+                        "400 The plain HTTP request was sent to HTTPS port" in response1.text and "cloudflare" in response1.text) or "visit_scheme=http" in response1.text) and (
+                    response2.status_code == 403 and '403 Forbidden' in response2.text):
+                return True
+        return False
+
+    @staticmethod
+    def detect_cloudflare_location(ip_addr: str, port: int | str, body: str, tcpDuration: str) -> dict | None:
+        if 'uag=Mozilla/5.0' in body:
+            matches = re.findall('colo=([A-Z]+)', body)
+            if matches:
+                dataCenter = matches[0]  # Get the first match
+                loc = locations.CloudflareLocationMap.get(dataCenter)
+                if loc:
+                    print(f"发现有效IP {ip_addr} 端口 {port} 位置信息 {loc['city']} 延迟 {tcpDuration} 毫秒")
+                    # Append a dictionary to resultChan to simulate adding to a channel
+                    return {
+                        "ipAddr": ip_addr,
+                        "port": port,
+                        "dataCenter": dataCenter,
+                        "region": loc['region'],
+                        "city": loc['city'],
+                        "latency": f"{tcpDuration} ms",
+                        "tcpDuration": tcpDuration
+                    }
+                print(f"发现有效IP {ip_addr} 端口 {port} 位置信息未知 延迟 {tcpDuration} 毫秒")
+                # Append a dictionary with some empty fields to resultChan
+                return {
+                    "ipAddr": ip_addr,
+                    "port": port,
+                    "dataCenter": dataCenter,
+                    "region": "",
+                    "city": "",
+                    "latency": f"{tcpDuration} ms",
+                    "tcpDuration": tcpDuration
+                }
+
+        return None
+
+    @staticmethod
     def check_cloudflare_proxy(host: str, port: str | int, tls: bool = True) -> [bool, {}]:
         ip = host
         port = int(port)
@@ -236,7 +316,7 @@ class IPChecker:
         response = None
         try:
             start_time = time.time()
-            response = requests.get(url, headers=headers, params=params, timeout=2500)
+            response = requests.get(url, headers=headers, params=params, timeout=5)
             # Calculate the total time taken for both operations
             total_duration = f'{(time.time() - start_time) * 1000:.2f}'
             print(f'Total tcp connection duration: {total_duration} ms')
@@ -294,4 +374,26 @@ def clean_dead_ip():
 
 
 if __name__ == '__main__':
-    clean_dead_ip()
+    # clean_dead_ip()
+    a = ['https://154.17.22.207', 'https://154.17.16.81', 'https://154.17.4.23', 'https://154.17.21.50',
+         'https://154.17.27.156', 'https://174.136.206.102', 'https://154.17.8.194:8081', 'https://154.17.30.90',
+         'https://154.17.10.76:8880', 'https://154.17.1.118', 'https://154.17.17.194', 'https://154.17.22.16',
+         'https://154.17.8.194:22660', 'https://154.17.8.194:26688', 'https://154.17.8.190:13995',
+         'https://154.17.8.81:52366', 'https://154.17.8.98:12071', 'https://154.17.26.56', 'https://154.17.0.80:564',
+         'https://65.75.194.182']
+    for i in a:
+        ip_str = i.split("//")[1]
+        ip = None
+        port = None
+        if ":" in ip_str:
+            ip = ip_str.split(":")[0]
+            port = ip_str.split(":")[1]
+        else:
+            ip = ip_str
+            port = '443'
+        cloudflare_proxy = IPChecker.new_check_cf_proxy(ip, port)
+        print(f"ip: {ip},port:{port}, cf-proxy:{cloudflare_proxy}")
+        time.sleep(1)
+
+    # cloudflare_proxy = IPChecker.new_check_cf_proxy('47.56.196.176', '9443')
+    # print(f"cloudflare_proxy: {cloudflare_proxy}")

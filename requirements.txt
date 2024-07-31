@@ -1,1 +1,10 @@
-
+certifi==2024.7.4
+charset-normalizer==3.3.2
+fofa-hack==0.0.2
+idna==3.7
+pycryptodome==3.20.0
+pycryptodomex==3.20.0
+pytz==2024.1
+redis==5.0.7
+requests==2.32.3
+urllib3==2.2.2

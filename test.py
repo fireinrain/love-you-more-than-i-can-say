@@ -31,7 +31,6 @@ def test_ip_file():
     parse_masscan_output("masscan_results/45.59.184.0-24_temp.txt", "masscan_results/45.59.184.0-24_ip.txt")
 
 
-
 def get_current_weekday_plus():
     now = datetime.now()
     current_time = now.time()
@@ -59,59 +58,87 @@ import unittest
 from unittest.mock import patch
 import pytz
 
+# class TestGetCurrentWeekdayPlus(unittest.TestCase):
+#     @patch('datetime.datetime')
+#     def test_monday_morning(self, mock_datetime):
+#         eastern = pytz.timezone('US/Eastern')
+#         mock_datetime.now.return_value = datetime(2023, 7, 24, 8, 0).replace(tzinfo=pytz.UTC).astimezone(
+#             eastern)
+#         self.assertEqual(get_current_weekday_plus(), 0)
+#
+#     @patch('datetime.datetime')
+#     def test_monday_afternoon(self, mock_datetime):
+#         eastern = pytz.timezone('US/Eastern')
+#         mock_datetime.now.return_value = datetime(2023, 7, 24, 13, 0).replace(tzinfo=pytz.UTC).astimezone(
+#             eastern)
+#         self.assertEqual(get_current_weekday_plus(), 1)
+#
+#     @patch('datetime.datetime')
+#     def test_sunday_morning(self, mock_datetime):
+#         eastern = pytz.timezone('US/Eastern')
+#         mock_datetime.now.return_value = datetime(2023, 7, 30, 9, 0).replace(tzinfo=pytz.UTC).astimezone(
+#             eastern)
+#         self.assertEqual(get_current_weekday_plus(), 12)
+#
+#     @patch('datetime.datetime')
+#     def test_sunday_afternoon(self, mock_datetime):
+#         eastern = pytz.timezone('US/Eastern')
+#         mock_datetime.now.return_value = datetime(2023, 7, 30, 15, 0).replace(tzinfo=pytz.UTC).astimezone(
+#             eastern)
+#         self.assertEqual(get_current_weekday_plus(), 13)
+#
+#     @patch('datetime.datetime')
+#     def test_edge_case_morning(self, mock_datetime):
+#         eastern = pytz.timezone('US/Eastern')
+#         mock_datetime.now.return_value = datetime(2023, 7, 25, 11, 59).replace(tzinfo=pytz.UTC).astimezone(
+#             eastern)
+#         self.assertEqual(get_current_weekday_plus(), 2)
+#
+#     @patch('datetime.datetime')
+#     def test_edge_case_afternoon(self, mock_datetime):
+#         eastern = pytz.timezone('US/Eastern')
+#         mock_datetime.now.return_value = datetime(2023, 7, 25, 12, 0).replace(tzinfo=pytz.UTC).astimezone(
+#             eastern)
+#         self.assertEqual(get_current_weekday_plus(), 3)
+#
+#     @patch('datetime.datetime')
+#     def test_midnight(self, mock_datetime):
+#         eastern = pytz.timezone('US/Eastern')
+#         mock_datetime.now.return_value = datetime(2023, 7, 26, 0, 0).replace(tzinfo=pytz.UTC).astimezone(
+#             eastern)
+#         self.assertEqual(get_current_weekday_plus(), 0)  # Assuming it falls outside the defined ranges
+#
+
+import requests
+import socket
 
 
+def new_check_cf_proxy(ip: str, port: int | str) -> str | bool:
+    """
+    向给定IP和端口发送GET请求，返回特定响应或超时指示。
 
+    参数:
+    ip: 表示IP地址的字符串。
+    port: 表示端口号的整数。
 
-class TestGetCurrentWeekdayPlus(unittest.TestCase):
-    @patch('datetime.datetime')
-    def test_monday_morning(self, mock_datetime):
-        eastern = pytz.timezone('US/Eastern')
-        mock_datetime.now.return_value = datetime(2023, 7, 24, 8, 0).replace(tzinfo=pytz.UTC).astimezone(
-            eastern)
-        self.assertEqual(get_current_weekday_plus(), 0)
+    返回:
+    表示结果的字符串（'https_error' 或 'timeout'）。
+    """
+    url = f"https://{ip}:{port}/cdn-cgi/trace"
+    try:
+        # 禁用重定向，并设置超时为 1.5 秒
+        response = requests.get(url, timeout=3, allow_redirects=False, verify=False)
+        if (
+                "400 The plain HTTP request was sent to HTTPS port" in response.text and "cloudflare" in response.text) or "visit_scheme=http" in response.text:
+            return True
 
-    @patch('datetime.datetime')
-    def test_monday_afternoon(self, mock_datetime):
-        eastern = pytz.timezone('US/Eastern')
-        mock_datetime.now.return_value = datetime(2023, 7, 24, 13, 0).replace(tzinfo=pytz.UTC).astimezone(
-            eastern)
-        self.assertEqual(get_current_weekday_plus(), 1)
-
-    @patch('datetime.datetime')
-    def test_sunday_morning(self, mock_datetime):
-        eastern = pytz.timezone('US/Eastern')
-        mock_datetime.now.return_value = datetime(2023, 7, 30, 9, 0).replace(tzinfo=pytz.UTC).astimezone(
-            eastern)
-        self.assertEqual(get_current_weekday_plus(), 12)
-
-    @patch('datetime.datetime')
-    def test_sunday_afternoon(self, mock_datetime):
-        eastern = pytz.timezone('US/Eastern')
-        mock_datetime.now.return_value = datetime(2023, 7, 30, 15, 0).replace(tzinfo=pytz.UTC).astimezone(
-            eastern)
-        self.assertEqual(get_current_weekday_plus(), 13)
-
-    @patch('datetime.datetime')
-    def test_edge_case_morning(self, mock_datetime):
-        eastern = pytz.timezone('US/Eastern')
-        mock_datetime.now.return_value = datetime(2023, 7, 25, 11, 59).replace(tzinfo=pytz.UTC).astimezone(
-            eastern)
-        self.assertEqual(get_current_weekday_plus(), 2)
-
-    @patch('datetime.datetime')
-    def test_edge_case_afternoon(self, mock_datetime):
-        eastern = pytz.timezone('US/Eastern')
-        mock_datetime.now.return_value = datetime(2023, 7, 25, 12, 0).replace(tzinfo=pytz.UTC).astimezone(
-            eastern)
-        self.assertEqual(get_current_weekday_plus(), 3)
-
-    @patch('datetime.datetime')
-    def test_midnight(self, mock_datetime):
-        eastern = pytz.timezone('US/Eastern')
-        mock_datetime.now.return_value = datetime(2023, 7, 26, 0, 0).replace(tzinfo=pytz.UTC).astimezone(
-            eastern)
-        self.assertEqual(get_current_weekday_plus(), 0)  # Assuming it falls outside the defined ranges
+        # if response.status_code == 403 and '403 Forbidden' in response.text:
+        #     return True
+    except requests.exceptions.Timeout:
+        return False
+    except requests.exceptions.RequestException:
+        return False
+    return False
 
 
 if __name__ == '__main__':
@@ -120,5 +147,16 @@ if __name__ == '__main__':
 
     # test_ip_file()
 
-    print(get_current_weekday_plus())
-    unittest.main()
+    # print(get_current_weekday_plus())
+    # unittest.main()
+
+    # proxy_ip = "47.56.196.176"
+    # proxy_port = "9443"
+    proxy_ip = '154.17.22.207'
+    proxy_port = '443'
+
+    result = new_check_cf_proxy(proxy_ip, proxy_port)
+    if result:
+        print("The proxy appears to be valid for speed.cloudflare.com")
+    else:
+        print("The proxy does not appear to be valid for speed.cloudflare.com")
