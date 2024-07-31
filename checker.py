@@ -410,7 +410,7 @@ async def main():
     #     print(f"ip: {ip},port:{port}, cf-proxy:{cloudflare_proxy}")
     #     time.sleep(1)
 
-    c2 = await check_if_cf_proxy('211.75.243.91', 16764)
+    c2 = await check_if_cf_proxy('27.50.48.117', 8880)
     print(f"cloudflare_proxy: {c2}")
 
 
