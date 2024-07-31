@@ -439,7 +439,7 @@ def run_task(asn_number: str):
             if r.incr(f"last_instance:{asn}") == 1:
                 result_counts = count_fields_containing_asn("snifferx-result", asn)
                 msg_info = f"扫描结束: ASN{asn},结果数量: {result_counts}"
-                telegram_notify = notify.pretty_telegram_notify("🍻🍻Open-Port-Sniffer运行结束",
+                telegram_notify = notify.pretty_telegram_notify("🎉🎉Open-Port-Sniffer运行结束",
                                                                 f"open-port-sniffer asn{asn}",
                                                                 msg_info)
                 telegram_notify = notify.clean_str_for_tg(telegram_notify)
