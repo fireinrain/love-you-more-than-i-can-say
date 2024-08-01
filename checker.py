@@ -367,6 +367,9 @@ def clean_dead_ip():
     # For each key, get the value and store in Cloudflare KV
     remove_counts = 0
     for key in keys:
+        # 排除fofacn 的ip
+        if 'fofa-cn' in key:
+            continue
         value = r.hget('snifferx-result', key)
 
         # Prepare the data for Cloudflare KV
