@@ -8,6 +8,7 @@ import notify
 import checker
 
 FoFaQueryRules = {
+    # 'KR': 'server=="cloudflare" && header="Forbidden" && asn=="31898" && country=="KR" && "http"',
     'KR': 'server=="cloudflare" && header="Forbidden" && asn!="13335" && asn!="209242" && country=="KR" && "http"',
     'JP': 'server=="cloudflare" && header="Forbidden" && asn!="13335" && asn!="209242" && country=="JP" && "http"',
     'TW': 'server=="cloudflare" && header="Forbidden" && asn!="13335" && asn!="209242" && region=="TW" && "http"',
@@ -17,6 +18,15 @@ FoFaQueryRules = {
     'CN': 'server=="cloudflare" && header="Forbidden" && asn!="13335" && asn!="209242" && country=="CN" && "https"',
     'US': 'server=="cloudflare" && header="Forbidden" && asn="906" && country=="US" && "https"'
 }
+
+CloudServiceRules = [
+    ('amazon', 'JP', 'server=="cloudflare" && header="Forbidden" && asn=="16509" && country=="JP" && "https"'),
+    ('amazon', 'SG', 'server=="cloudflare" && header="Forbidden" && asn=="16509" && country=="SG" && "https"'),
+
+    ('google', 'JP', 'server=="cloudflare" && header="Forbidden" && asn=="396982" && country=="JP" && "https"'),
+    ('google', 'TW', 'server=="cloudflare" && header="Forbidden" && asn=="396982" && region=="TW" && "https"'),
+
+]
 
 
 def query_proxy_ip(query_rule: str, count: int) -> [()]:
@@ -70,12 +80,36 @@ async def main():
         print("Start fofa message sent successfully!")
     else:
         print("Start fofa message failed to send.")
+
+    # mix in cloudservice rule to fofa-query rule
     fofa_static = {}
+    has_test_ip_set = set()
+    # process cloud service rule
+    for cloud_rule in CloudServiceRules:
+        print(f"find rule: {cloud_rule}")
+        rule = cloud_rule[2]
+        region = cloud_rule[1]
+        proxy_ips = query_proxy_ip(rule, 50)
+        proxy_ip_list = []
+        for proxy_ip in proxy_ips:
+            has_test_ip_set.add(proxy_ip)
+            check_info = await checker.check_if_cf_proxy(proxy_ip[0], proxy_ip[1])
+            if check_info[0]:
+                print(f"ip: {proxy_ip[0]},port:{proxy_ip[1]}, cf-proxy:{check_info}")
+                proxy_ip_list.append(check_info[1])
+        fofa_static[region] = len(proxy_ip_list)
+        store_proxy_ip2redis(proxy_ip_list, region)
+        print("--------------------------------")
+        await asyncio.sleep(30)
+
     for region, rule in FoFaQueryRules.items():
         print(f"find rule: {rule}")
         proxy_ips = query_proxy_ip(rule, 50)
         proxy_ip_list = []
         for proxy_ip in proxy_ips:
+            if proxy_ip in has_test_ip_set:
+                print(f"当前IP: {proxy_ip}已经在CLoudServiceRule测试过...")
+                continue
             check_info = await checker.check_if_cf_proxy(proxy_ip[0], proxy_ip[1])
             if check_info[0]:
                 print(f"ip: {proxy_ip[0]},port:{proxy_ip[1]}, cf-proxy:{check_info}")
