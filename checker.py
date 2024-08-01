@@ -384,11 +384,13 @@ def clean_dead_ip():
             r.hdel('snifferx-result', key)
             remove_counts += 1
             print(f"已删除: {key} {kv_value}")
+            continue
         port_open = IPChecker.check_port_open_with_retry(ip, port, 10)
         if not port_open:
             print(f">>> 当前优选IP端口已失效: {ip}:{port},进行移除...")
             r.hdel('snifferx-result', key)
             remove_counts += 1
+            continue
 
         # 判断当前是否为周日 如果是 则进行gfw ban检测
         today = datetime.datetime.today()
@@ -452,6 +454,6 @@ async def main():
 
 
 if __name__ == '__main__':
-    # clean_dead_ip()
+    clean_dead_ip()
 
-    asyncio.run(main())
+    # asyncio.run(main())

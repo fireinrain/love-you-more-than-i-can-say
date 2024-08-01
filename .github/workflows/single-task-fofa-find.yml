@@ -42,6 +42,6 @@ jobs:
         sudo pip install -r requirements.txt
         sudo pip install redis
 
-    - name: Run Run love-you-more-than
+    - name: Run love-you-more-than-find
       run: |
         sudo -E python3 fofa.py

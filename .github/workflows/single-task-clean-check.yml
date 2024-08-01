@@ -41,6 +41,6 @@ jobs:
         sudo pip install -r requirements.txt
         sudo pip install redis
 
-    - name: Run Run love-you-more-than
+    - name: Run single-task-clean-check
       run: |
         sudo -E python3 checker.py
