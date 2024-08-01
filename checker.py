@@ -367,9 +367,6 @@ def clean_dead_ip():
     # For each key, get the value and store in Cloudflare KV
     remove_counts = 0
     for key in keys:
-        # 排除fofacn 的ip
-        if 'fofa-cn' in key:
-            continue
         value = r.hget('snifferx-result', key)
 
         # Prepare the data for Cloudflare KV
@@ -381,6 +378,11 @@ def clean_dead_ip():
         tls = kv_value['enable_tls']
         datacenter = kv_value['data_center']
         region = kv_value['region']
+        city = kv_value['city']
+
+        # 排除fofacn 的ip # 排除上海阿里云 它奇葩的禁止国外ping和tcp
+        if 'fofa-cn' in key and port == 443 and city == 'Tokyo':
+            continue
 
         if region in dont_need_dc and '906' not in str(key):
             # delete ip
