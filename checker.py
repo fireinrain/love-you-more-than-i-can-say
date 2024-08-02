@@ -351,7 +351,7 @@ async def check_if_cf_proxy(ip: str, port: int) -> (bool, {}):
 def clean_dead_ip():
     # 发送TG消息开始
     msg_info = f"CleanGFW-Ban ip"
-    telegram_notify = notify.pretty_telegram_notify("🍻🍻CleanGFW-Ban-IP运行开始",
+    telegram_notify = notify.pretty_telegram_notify("🧹🧹CleanGFW-Ban-IP运行开始",
                                                     f"clean-ban-ip gfw",
                                                     msg_info)
     telegram_notify = notify.clean_str_for_tg(telegram_notify)

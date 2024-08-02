@@ -62,7 +62,7 @@ def store_proxy_ip2redis(iptests, region: str):
 async def main():
     # 发送TG消息开始
     msg_info = f"FoFaCN查找: fofa规则数量: {len(CNLocalRules)}"
-    telegram_notify = notify.pretty_telegram_notify("🍻🍻FofaCN-Find-Proxy运行开始",
+    telegram_notify = notify.pretty_telegram_notify("👁️‍🗨️👁️‍🗨️FofaCN-Find-Proxy运行开始",
                                                     f"fofacn-find-proxy fofacn",
                                                     msg_info)
     telegram_notify = notify.clean_str_for_tg(telegram_notify)

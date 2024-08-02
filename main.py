@@ -529,7 +529,7 @@ def main():
             print(f"清理上次数据残留成功...")
             # 发送TG消息开始
             msg_info = f"开始扫描: ASN{asn},IPv4规模: {ASN_Map.get(asn).split(',')[1]}"
-            telegram_notify = notify.pretty_telegram_notify("🍻🍻Open-Port-Sniffer运行开始",
+            telegram_notify = notify.pretty_telegram_notify("🔎🔎Open-Port-Sniffer运行开始",
                                                             f"open-port-sniffer asn{asn}",
                                                             msg_info)
             telegram_notify = notify.clean_str_for_tg(telegram_notify)
