@@ -414,7 +414,9 @@ def clean_dead_ip():
                 r.hdel('snifferx-result', key)
                 remove_counts += 1
 
-    end_msg_info = f"IP移除统计信息: {remove_counts}"
+    # 获取剩余ip数量
+    new_keys = r.hkeys('snifferx-result')
+    end_msg_info = f"IP移除统计信息: {remove_counts},剩余可用IP数: {len(new_keys)}"
     telegram_notify = notify.pretty_telegram_notify("🎉🎉CleanGFW-Ban-IP运行结束",
                                                     f"clean-ban-ip gfw",
                                                     end_msg_info)
