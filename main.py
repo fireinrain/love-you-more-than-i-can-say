@@ -3,7 +3,6 @@ import datetime
 import json
 import os
 import random
-import re
 import shutil
 import subprocess
 import sys
@@ -236,27 +235,25 @@ def parse_masscan_output(file_path: str, ip_text_file: str):
 
 def store_ip_port_result_in_redis(asn, iptests: []):
     for server in iptests:
-        ip = server['ip']
-        port = server['port']
-        if server['download_speed'] == '0 kB/s':
+        ip = server["ip"]
+        port = server["port"]
+        if server["download_speed"] == '0 kB/s':
             continue
         server_info_json = json.dumps(server)
-        # 尝试修复格式问题
-        server_info_json = re.sub(r"'", '"', server_info_json)
 
         r.hsetnx('snifferx-result', f'{asn}:{ip}:{port}', server_info_json)
 
 
 def server_info_to_dict(server_info):
     return {
-        'ip': server_info.ip,
-        'port': server_info.port,
-        'enable_tls': server_info.enable_tls,
-        'data_center': server_info.data_center,
-        'region': server_info.region,
-        'city': server_info.city,
-        'network_latency': server_info.network_latency,
-        'download_speed': server_info.download_speed
+        "ip": server_info.ip,
+        "port": server_info.port,
+        "enable_tls": server_info.enable_tls,
+        "data_center": server_info.data_center,
+        "region": server_info.region,
+        "city": server_info.city,
+        "network_latency": server_info.network_latency,
+        "download_speed": server_info.download_speed
     }
 
 
@@ -286,8 +283,8 @@ def scan_and_store_results(asn, scan_ports):
 
 # 最多返回6行数据
 def parse_result_csv(result_csv_file: str) -> []:
-    ServerInfo = namedtuple('ServerInfo', ['ip', 'port', 'enable_tls', 'data_center',
-                                           'region', 'city', 'network_latency', 'download_speed'])
+    ServerInfo = namedtuple("ServerInfo", ["ip", "port", "enable_tls", "data_center",
+                                           "region", "city", "network_latency", "download_speed"])
 
     with open(result_csv_file, 'r') as file:
         reader = csv.reader(file)
@@ -298,7 +295,7 @@ def parse_result_csv(result_csv_file: str) -> []:
             server_info = ServerInfo(
                 ip=row[0],
                 port=int(row[1]),
-                enable_tls=row[2].lower() == 'true',
+                enable_tls=row[2].lower() == "true",
                 data_center=row[3],
                 region=row[4],
                 city=row[5],
