@@ -381,7 +381,7 @@ def clean_dead_ip():
         city = kv_value['city']
 
         # 排除fofacn 的ip # 排除上海阿里云 它奇葩的禁止国外ping和tcp
-        if 'fofa-cn' in key and port == 443 and city == 'Tokyo':
+        if 'fofa-cn' in str(key) and port == 443 and city == 'Tokyo':
             continue
 
         if region in dont_need_dc and '906' not in str(key):
