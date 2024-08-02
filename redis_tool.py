@@ -14,6 +14,7 @@ pool = redis.ConnectionPool(
     max_connections=2
 )
 # 适配的redis版本
+# redis 版本6.14
 # 初始化 Redis 连接
 r = redis.Redis(connection_pool=pool,
                 ssl=False)
