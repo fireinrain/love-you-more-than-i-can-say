@@ -3,6 +3,7 @@ import datetime
 import json
 import os
 import random
+import re
 import shutil
 import subprocess
 import sys
@@ -240,6 +241,8 @@ def store_ip_port_result_in_redis(asn, iptests: []):
         if server['download_speed'] == '0 kB/s':
             continue
         server_info_json = json.dumps(server)
+        # 尝试修复格式问题
+        server_info_json = re.sub(r"'", '"', server_info_json)
 
         r.hsetnx('snifferx-result', f'{asn}:{ip}:{port}', server_info_json)
 
