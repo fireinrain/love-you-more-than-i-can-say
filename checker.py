@@ -385,6 +385,9 @@ def clean_dead_ip():
             continue
 
         if region in dont_need_dc and '906' not in str(key):
+            # 不主动删除fofa-cn的数据
+            if 'fofa-cn' in str(key):
+                continue
             # delete ip
             r.hdel('snifferx-result', key)
             remove_counts += 1
