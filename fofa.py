@@ -22,7 +22,7 @@ FoFaQueryRules = {
 CloudServiceRules = [
     ('amazon', 'JP', 'server=="cloudflare" && header="Forbidden" && asn=="16509" && country=="JP" && "https"'),
     ('amazon', 'SG', 'server=="cloudflare" && header="Forbidden" && asn=="16509" && country=="SG" && "https"'),
-
+    ('tencent', 'SG', 'server=="cloudflare" && header="Forbidden" && asn=="132203" && country=="SG" && "https"'),
     ('google', 'JP', 'server=="cloudflare" && header="Forbidden" && asn=="396982" && country=="JP" && "https"'),
     ('google', 'TW', 'server=="cloudflare" && header="Forbidden" && asn=="396982" && region=="TW" && "https"'),
 
