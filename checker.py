@@ -341,7 +341,8 @@ async def check_if_cf_proxy(ip: str, port: int) -> (bool, {}):
             if (
                     "400 The plain HTTP request was sent to HTTPS port" in text and "cloudflare" in text) or "visit_scheme=http" in text:
                 speed, location = await cf_speed_download(ip, port)
-                if speed - 0.1 > 0:
+                # 兼容有些事代理ip 但是不可测速
+                if location != "" and location['city'] != "" or speed - 0.1 > 0:
                     return True, location
         except Exception as e:
             print(f"Request Error: {e}")
@@ -387,6 +388,8 @@ def clean_dead_ip():
         if region in dont_need_dc and '906' not in str(key):
             # 不主动删除fofa的数据
             if 'fofa' in str(key):
+                # 对于国内来说访问的city几乎都是
+                print(f"fofa find,做跳过处理")
                 continue
             # delete ip 主动删除US EU的ip 不做通断检测
             r.hdel('snifferx-result', key)
