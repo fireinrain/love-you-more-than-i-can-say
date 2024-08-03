@@ -20,8 +20,6 @@ import requests
 from log import logger
 
 
-
-
 def acquire_lock_with_timeout(redis_client, lock_name, acquire_timeout=60 * 60, lock_timeout=60 * 60):
     identifier = str(uuid.uuid4())
     end = time.time() + acquire_timeout
@@ -417,7 +415,16 @@ def count_fields_containing_asn(hashmap_key, asn):
 def run_task(asn_number: str):
     asn = asn_number
     clean_duplicate_redis_data(asn)
-    scan_ports = '443,8443'
+    # scan_ports = (
+    #     '443,1443,2443,3443,4443,5443,6443,7443,8443,9443,'
+    #     '10443,11443,12443,13443,14443,15443,16443,17443,18443,19443,'
+    #     '20443,21443,22443,23443,24443,25443,26443,27443,28443,29443,'
+    #     '30443,31443,32443,33443,34443,35443,36443,37443,38443,39443,'
+    #     '40443,41443,42443,43443,44443,45443,46443,47443,48443,49443,'
+    #     '50443,51443,52443,53443,54443,55443,56443,57443,58443,59443,'
+    #     '60443,61443,62443,63443,64443,65443,23555')
+
+    scan_ports = '443,8443,23555'
     batch_ip_size = 100000  # Example batch size
 
     # 初始化任务，只需执行一次

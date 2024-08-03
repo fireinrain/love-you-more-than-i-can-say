@@ -396,6 +396,7 @@ def clean_dead_ip():
         port_open = IPChecker.check_port_open_with_retry(ip, port, 10)
         if not port_open:
             print(f">>> 当前优选IP端口已失效: {ip}:{port},进行移除...")
+            print(f">>> 原始记录: {key}--{kv_value}")
             r.hdel('snifferx-result', key)
             remove_counts += 1
             continue
@@ -411,6 +412,7 @@ def clean_dead_ip():
             time.sleep(5)
             if baned_with_gfw:
                 print(f">>> 当前优选IP端口已被墙: {ip}:{port},进行移除...")
+                print(f">>> 原始记录: {key}--{kv_value}")
                 r.hdel('snifferx-result', key)
                 remove_counts += 1
 
