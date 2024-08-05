@@ -1,5 +1,6 @@
 import asyncio
 import json
+import re
 
 from fofa_hack import fofa
 from redis_tool import r
@@ -17,6 +18,17 @@ CNLocalRules = [
     ('Guangzhou', 'CN', 'server=="cloudflare" && header="Forbidden" && country=="CN" && city=="Guangzhou" && "https"'),
     ('Beijing', 'CN', 'server=="cloudflare" && header="Forbidden" && country=="CN" && city=="Beijing" && "https"'),
 ]
+
+
+def is_valid_domain(domain):
+    # 定义域名的正则表达式模式
+    pattern = r'^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$'
+
+    # 使用re.match()函数来匹配整个字符串
+    if re.match(pattern, domain):
+        return True
+    else:
+        return False
 
 
 def query_proxy_ip(query_rule: str, count: int) -> [()]:
@@ -38,6 +50,8 @@ def query_proxy_ip(query_rule: str, count: int) -> [()]:
             ip = ip_str
             port = 443
         result_list.append((ip, port))
+
+    result_list = [(i[0], i[1]) for i in result_list if is_valid_domain(i[0])]
     return result_list
 
 
