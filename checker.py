@@ -359,9 +359,9 @@ def clean_dead_ip():
     success = notify.send_telegram_message(telegram_notify)
 
     if success:
-        print("Start clean ip message sent successfully!")
+        print(">>> Start clean ip message sent successfully!")
     else:
-        print("Start clean ip message failed to send.")
+        print(">>> Start clean ip message failed to send.")
 
     keys = r.hkeys('snifferx-result')
     dont_need_dc = ['North America', 'Europe']
@@ -376,25 +376,26 @@ def clean_dead_ip():
 
         ip = kv_value['ip']
         port = kv_value['port']
-        tls = kv_value['enable_tls']
-        datacenter = kv_value['data_center']
+        # tls = kv_value['enable_tls']
+        # datacenter = kv_value['data_center']
         region = kv_value['region']
         city = kv_value['city']
 
         # 排除fofacn 的ip # 排除上海阿里云 它奇葩的禁止国外ping和tcp
         if 'fofa-cn' in str(key) and port == 443 and city == 'Tokyo':
+            print(f">>> fofa-cn 数据,暂时做跳过处理...")
             continue
 
         if region in dont_need_dc and '906' not in str(key):
             # 不主动删除fofa的数据
             if 'fofa' in str(key):
                 # 对于国内来说访问的city几乎都是
-                print(f"fofa find,做跳过处理")
+                print(f">>> fofa find 数据,暂时做跳过处理...")
                 continue
             # delete ip 主动删除US EU的ip 不做通断检测
             r.hdel('snifferx-result', key)
             remove_counts += 1
-            print(f"不做通断检测，已删除US/EU: {key} {kv_value}")
+            print(f">>> 普通US/EU IP数据,当前不做通断检测，直接删除: {key} {kv_value}")
             continue
         port_open = IPChecker.check_port_open_with_retry(ip, port, 10)
         if not port_open:
@@ -429,9 +430,9 @@ def clean_dead_ip():
     success = notify.send_telegram_message(telegram_notify)
 
     if success:
-        print("Start fofa find message sent successfully!")
+        print(">>> Start fofa find message sent successfully!")
     else:
-        print("Start fofa find message failed to send.")
+        print(">>> Start fofa find message failed to send.")
 
 
 def recover_init_data():
