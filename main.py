@@ -527,43 +527,13 @@ def main():
         return
     else:
         if argv_[1] == "clean":
-            # keys_to_delete = r.keys(f'*{asn}*')
-            # # 删除这些键
-            # if keys_to_delete:
-            #     r.delete(*keys_to_delete)
-            # # 移除snifferx-result hashmap中特有的asn 扫描结果
-            # delete_keys_containing_asn("snifferx-result", asn)
-            # print(f"清理上次运行数据成功...")
-
-            keys = r.hkeys('snifferx-result')
-            dont_need_dc = ['North America', 'Europe']
-            # For each key, get the value and store in Cloudflare KV
-            for key in keys:
-                value = r.hget('snifferx-result', key)
-
-                # Prepare the data for Cloudflare KV
-                # kv_key = key.decode('utf-8')
-                kv_value = json.loads(value.decode('utf-8'))
-
-                ip = kv_value['ip']
-                port = kv_value['port']
-                tls = kv_value['enable_tls']
-                datacenter = kv_value['data_center']
-                region = kv_value['region']
-                city = kv_value['city']
-
-                # 排除fofacn 的ip # 排除上海阿里云 它奇葩的禁止国外ping和tcp
-                if 'fofa-cn' in str(key) and port == 443 and city == 'Tokyo':
-                    continue
-
-                if region in dont_need_dc and '906' not in str(key):
-                    # 不主动删除fofa的数据
-                    if 'fofa' in str(key):
-                        # 对于国内来说访问的city几乎都是
-                        print(f"fofa find,做跳过处理")
-                        continue
-                    # delete ip 主动删除US EU的ip 不做通断检测
-                    r.hdel('snifferx-result', key)
+            keys_to_delete = r.keys(f'*{asn}*')
+            # 删除这些键
+            if keys_to_delete:
+                r.delete(*keys_to_delete)
+            # 移除snifferx-result hashmap中特有的asn 扫描结果
+            delete_keys_containing_asn("snifferx-result", asn)
+            print(f"清理上次运行asn数据成功...")
             # 发送TG消息开始
             msg_info = f"开始扫描: ASN{asn},IPv4规模: {ASN_Map.get(asn).split(',')[1]}"
             telegram_notify = notify.pretty_telegram_notify("🔎🔎Open-Port-Sniffer运行开始",
